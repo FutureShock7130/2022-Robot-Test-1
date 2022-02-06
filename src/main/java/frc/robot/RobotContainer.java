@@ -6,8 +6,6 @@ package frc.robot;
 
 import java.util.List;
 
-import javax.swing.filechooser.FileNameExtensionFilter;
-
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -101,17 +99,16 @@ public class RobotContainer {
         config
     );
 
-
     MecanumControllerCommand mecanumControllerCommand = new MecanumControllerCommand(
       m_trajectory, 
       m_robotDrive::getPose, 
       DriveConstants.kFeedforward,
       DriveConstants.kDriveKinematics,
 
+      // xController, yController and thetaController  
       new PIDController(AutoConstants.kPXController, 0, 0),
-            new PIDController(AutoConstants.kPYController, 0, 0),
-            new ProfiledPIDController(
-                AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints),
+      new PIDController(AutoConstants.kPYController, 0, 0),
+      new ProfiledPIDController(AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints),
 
       // Needed for normalizing wheel speeds
       AutoConstants.kMaxSpeedMetersPerSecond,
@@ -124,8 +121,8 @@ public class RobotContainer {
 
       m_robotDrive::getWheelSpeeds, 
       m_robotDrive::setDriveMotorControllersVolts, 
-      m_robotDrive);
-    
+      m_robotDrive
+    );
     
     // Reset odometry to the starting pose of the trajectory.
     m_robotDrive.resetOdometry(m_trajectory.getInitialPose());
