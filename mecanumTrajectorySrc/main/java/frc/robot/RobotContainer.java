@@ -115,10 +115,11 @@ public class RobotContainer {
                 double xDiff = targetX - initTranslation.getX();
                 double yDiff = targetY - initTranslation.getY();
                 double changeCalc = Math.atan(yDiff/xDiff);
-                changeAngle = new Rotation2d(changeCalc);
-                changeAngle.plus(initRotation.minus(initRotation.plus(initRotation)));
-                changeAngle = changeAngle.getRadians()>Math.PI ? changeAngle.minus(new Rotation2d(2*Math.PI)):changeAngle;
+                changeAngle = new Rotation2d(changeCalc).plus(initRotation.times(-1));
+                changeAngle = changeAngle.getRadians()>Math.PI ? changeAngle.minus(new Rotation2d(2*Math.PI)) : changeAngle;
                 finalRotation = initRotation.rotateBy(changeAngle);
+                DriverStation.reportWarning("final angle"+finalRotation.getDegrees(), false);
+                DriverStation.reportWarning("angle change"+changeAngle.getDegrees(), false);
         }
 
         @Override
