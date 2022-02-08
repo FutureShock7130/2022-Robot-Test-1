@@ -74,10 +74,11 @@ public class RobotContainer {
      * {@link JoystickButton}.
      */
     private void configureButtonBindings() {
-        // Drive at half speed when the right bumper is held
+        // Drive at half speed when the RB button is held
         new JoystickButton(m_driverController, 6)
                 .whenPressed(() -> m_robotDrive.setMaxOutput(0.5))
                 .whenReleased(() -> m_robotDrive.setMaxOutput(1));
+        // rotate and aim at target upon pressing of the A button
         new JoystickButton(m_driverController,1).whenPressed(new teleopAimCommand(m_robotDrive));
     }
 
@@ -87,17 +88,19 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public void testDrive() {
-        DriverStation.reportWarning(""+m_robotDrive.getPose().getX(), false);
         m_robotDrive.testMotor();
-
     }
 
     public class teleopAimCommand extends CommandBase {
-        
+        /*
+        This command is used to allow the robot to aim at a specific coordinate at any point on the field.
+        Future update will make its target adjustable without changing the class itself. 
+        */ 
+
         private DriveSubsystem m_robotDrive;
         Translation2d initTranslation;
         Rotation2d initRotation;
-        Rotation2d changeAngle;
+        Rotation2d changeAngle; 
         Rotation2d finalRotation;
         Rotation2d currentRotation;
         double targetX = 3;
@@ -112,31 +115,39 @@ public class RobotContainer {
         public void initialize(){
                 initTranslation = m_robotDrive.getPose().getTranslation();
                 initRotation = m_robotDrive.getPose().getRotation();
+                // get translation2d object and rotation2d object from the Pose2d object from the DriveSubsysten.
                 double xDiff = targetX - initTranslation.getX();
+                // Calculate difference in x coordinate between the target coordinate and the current coordinate
                 double yDiff = targetY - initTranslation.getY();
+                // Calculate difference in y coordinate between the target coordinate and the current coordinate
                 double changeCalc = Math.atan(yDiff/xDiff);
+                // Calculate the angle difference between the two coordinate (if the current rotation(angle) is 0)
                 changeAngle = new Rotation2d(changeCalc).plus(initRotation.times(-1));
+                // Add the current angle into the rotation. Think of it as first correcting the angle of the robot to 0, 
+                // then turn the actual angle difference between the two coordinates.
                 changeAngle = changeAngle.getRadians()>Math.PI ? changeAngle.minus(new Rotation2d(2*Math.PI)) : changeAngle;
+                // if the angle is greater than Pi, the angle is too big (larger than half the circle) 
+                // and it's better to rotate the other way around. So I used this inline if statement (?: statement) to assign the angle
+                // if the angle is greater than Pi, than it should turn the angle-2pi (draw a diagram to help you think about it)
                 finalRotation = initRotation.rotateBy(changeAngle);
-                DriverStation.reportWarning("final angle"+finalRotation.getDegrees(), false);
-                DriverStation.reportWarning("angle change"+changeAngle.getDegrees(), false);
+                // Calculate the final angle that the robot should be at, which will be used to determine when the rotation should stop
         }
 
         @Override
         public void execute(){
                 m_robotDrive.drive(0,0, changeAngle.getRadians()/2, true);
+                // divided by 2 to move slower but more precise
                 currentRotation = m_robotDrive.getPose().getRotation();
-                //DriverStation.reportWarning("initTranslation"+initTranslation.getX()+","+initTranslation.getY(), false);
-                //DriverStation.reportWarning("transition change"+(targetX-initTranslation.getX())+","+(targetY-initTranslation.getY()), false);
+                // update rotation for comparison
         }
 
         public boolean isFinished(){
                 while (Math.abs(finalRotation.minus(currentRotation).getRadians())>0.05){
-                        //DriverStation.reportWarning("current angle"+currentRotation.getDegrees(), false);
-                        //DriverStation.reportWarning("target angle"+finalRotation.getDegrees(), false);
+                        // if the current rotation is not 0.05 radians within the target angle, keep rotating
                         return false;
                 }
                 return true;
+                // stops the function by returning true
         }
         
         
