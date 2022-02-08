@@ -43,7 +43,6 @@ public class RobotContainer {
 
     // The driver's controller
     Joystick m_driverController = new Joystick(OIConstants.kDriverControllerPort);
-
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
@@ -88,7 +87,9 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public void testDrive() {
+        DriverStation.reportWarning(""+m_robotDrive.getPose().getX(), false);
         m_robotDrive.testMotor();
+
     }
 
     public class teleopAimCommand extends CommandBase {
@@ -111,18 +112,27 @@ public class RobotContainer {
         public void initialize(){
                 initTranslation = m_robotDrive.getPose().getTranslation();
                 initRotation = m_robotDrive.getPose().getRotation();
-                changeAngle = new Rotation2d(targetX - initTranslation.getX(), targetY - initTranslation.getY());
+                double xDiff = targetX - initTranslation.getX();
+                double yDiff = targetY - initTranslation.getY();
+                double changeCalc = Math.atan(yDiff/xDiff);
+                changeAngle = new Rotation2d(changeCalc);
+                changeAngle.plus(initRotation.minus(initRotation.plus(initRotation)));
+                changeAngle = changeAngle.getRadians()>Math.PI ? changeAngle.minus(new Rotation2d(2*Math.PI)):changeAngle;
                 finalRotation = initRotation.rotateBy(changeAngle);
         }
 
         @Override
         public void execute(){
-                m_robotDrive.drive(0,0, changeAngle.getRadians(), false);
+                m_robotDrive.drive(0,0, changeAngle.getRadians()/2, true);
                 currentRotation = m_robotDrive.getPose().getRotation();
+                //DriverStation.reportWarning("initTranslation"+initTranslation.getX()+","+initTranslation.getY(), false);
+                //DriverStation.reportWarning("transition change"+(targetX-initTranslation.getX())+","+(targetY-initTranslation.getY()), false);
         }
 
         public boolean isFinished(){
-                while (Math.abs(finalRotation.minus(currentRotation).getRadians())>0.1){
+                while (Math.abs(finalRotation.minus(currentRotation).getRadians())>0.05){
+                        //DriverStation.reportWarning("current angle"+currentRotation.getDegrees(), false);
+                        //DriverStation.reportWarning("target angle"+finalRotation.getDegrees(), false);
                         return false;
                 }
                 return true;

@@ -10,6 +10,8 @@ import edu.wpi.first.math.kinematics.MecanumDriveOdometry;
 import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -38,6 +40,7 @@ public class DriveSubsystem extends SubsystemBase {
   MecanumDriveOdometry m_odometry =
       new MecanumDriveOdometry(DriveConstants.kDriveKinematics, m_gyro.getRotation2d());
 
+  private Field2d m_field = new Field2d();
   /** Creates a new DriveSubsystem. */
   public DriveSubsystem() {
     // Sets the distance per pulse for the encoders
@@ -47,6 +50,7 @@ public class DriveSubsystem extends SubsystemBase {
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
     //m_drive.setSafetyEnabled(false);
+    SmartDashboard.putData("Field", m_field);
     motorFR.setInverted(true);
     motorRR.setInverted(true);
   }
@@ -58,9 +62,10 @@ public class DriveSubsystem extends SubsystemBase {
         m_gyro.getRotation2d(),
         new MecanumDriveWheelSpeeds(
             motorFL.getSelectedSensorVelocity()* (10.0 / 4096) * DriveConstants.kWheelCircumference,
-            motorFL.getSelectedSensorVelocity()* (10.0 / 4096) * DriveConstants.kWheelCircumference,
-            motorFL.getSelectedSensorVelocity()* (10.0 / 4096) * DriveConstants.kWheelCircumference,
-            motorFL.getSelectedSensorVelocity()* (10.0 / 4096) * DriveConstants.kWheelCircumference));
+            motorFR.getSelectedSensorVelocity()* (10.0 / 4096) * DriveConstants.kWheelCircumference,
+            motorRL.getSelectedSensorVelocity()* (10.0 / 4096) * DriveConstants.kWheelCircumference,
+            motorRR.getSelectedSensorVelocity()* (10.0 / 4096) * DriveConstants.kWheelCircumference));
+    m_field.setRobotPose(m_odometry.getPoseMeters());
   }
 
   /**
