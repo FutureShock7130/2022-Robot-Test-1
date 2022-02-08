@@ -11,7 +11,6 @@ import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
 import frc.robot.Constants.DriveConstants;
-import edu.wpi.first.wpilibj.motorcontrol.PWMTalonSRX;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
@@ -24,7 +23,7 @@ public class DriveSubsystem extends SubsystemBase {
   private final PWMTalonSRX m_frontRight = new PWMTalonSRX(DriveConstants.kFrontRightMotorPort);
   private final PWMTalonSRX m_rearRight = new PWMTalonSRX(DriveConstants.kRearRightMotorPort);
   */
-
+  
   private final WPI_TalonSRX motorFL = new WPI_TalonSRX(DriveConstants.kFrontLeftMotorID);
   private final WPI_TalonSRX motorRL = new WPI_TalonSRX(DriveConstants.kRearLeftMotorID);
   private final WPI_TalonSRX motorFR = new WPI_TalonSRX(DriveConstants.kFrontRightMotorID);

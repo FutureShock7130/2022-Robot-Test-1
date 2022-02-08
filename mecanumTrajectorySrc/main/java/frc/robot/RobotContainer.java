@@ -22,6 +22,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.CommandBase;
 import edu.wpi.first.wpilibj2.command.MecanumControllerCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -57,9 +58,9 @@ public class RobotContainer {
                 // hand, and turning controlled by the right.
                 new RunCommand(
                         () -> m_robotDrive.drive(
-                                m_driverController.getRawAxis(1),
-                                m_driverController.getRawAxis(4),
                                 m_driverController.getRawAxis(0),
+                                -m_driverController.getRawAxis(1),
+                                m_driverController.getRawAxis(4),
                                 false),
                         m_robotDrive));
     }
@@ -75,9 +76,10 @@ public class RobotContainer {
      */
     private void configureButtonBindings() {
         // Drive at half speed when the right bumper is held
-        new JoystickButton(m_driverController, 1)
+        new JoystickButton(m_driverController, 6)
                 .whenPressed(() -> m_robotDrive.setMaxOutput(0.5))
                 .whenReleased(() -> m_robotDrive.setMaxOutput(1));
+        new JoystickButton(m_driverController,1).whenPressed(new teleopAimCommand(m_robotDrive));
     }
 
     /**
@@ -88,6 +90,46 @@ public class RobotContainer {
     public void testDrive() {
         m_robotDrive.testMotor();
     }
+
+    public class teleopAimCommand extends CommandBase {
+        
+        private DriveSubsystem m_robotDrive;
+        Translation2d initTranslation;
+        Rotation2d initRotation;
+        Rotation2d changeAngle;
+        Rotation2d finalRotation;
+        Rotation2d currentRotation;
+        double targetX = 3;
+        double targetY = 4;
+        
+        public teleopAimCommand(DriveSubsystem robotDrive){
+                m_robotDrive = robotDrive;
+                addRequirements(robotDrive);
+        }
+        
+        @Override
+        public void initialize(){
+                initTranslation = m_robotDrive.getPose().getTranslation();
+                initRotation = m_robotDrive.getPose().getRotation();
+                changeAngle = new Rotation2d(targetX - initTranslation.getX(), targetY - initTranslation.getY());
+                finalRotation = initRotation.rotateBy(changeAngle);
+        }
+
+        @Override
+        public void execute(){
+                m_robotDrive.drive(0,0, changeAngle.getRadians(), false);
+                currentRotation = m_robotDrive.getPose().getRotation();
+        }
+
+        public boolean isFinished(){
+                while (Math.abs(finalRotation.minus(currentRotation).getRadians())>0.1){
+                        return false;
+                }
+                return true;
+        }
+        
+        
+    };
 
     public Command getAutonomousCommand() {
         // Create config for trajectory
@@ -107,7 +149,7 @@ public class RobotContainer {
                 new Pose2d(5, 0, new Rotation2d(1)),
                 config);
 
-        String trajectoryJSON = "paths/testPath.wpilib.json";
+        String trajectoryJSON = "paths/circularPath.wpilib.json";
         try {
             Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve(trajectoryJSON);
             Trajectory testTrajectory = TrajectoryUtil.fromPathweaverJson(trajectoryPath);
