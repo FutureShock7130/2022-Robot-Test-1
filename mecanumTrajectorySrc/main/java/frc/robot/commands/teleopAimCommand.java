@@ -40,6 +40,7 @@ public class teleopAimCommand extends CommandBase {
             // Add the current angle into the rotation. Think of it as first correcting the angle of the robot to 0, 
             // then turn the actual angle difference between the two coordinates.
             changeAngle = changeAngle.getRadians()>Math.PI ? changeAngle.minus(new Rotation2d(2*Math.PI)) : changeAngle;
+            changeAngle = changeAngle.getRadians()<-Math.PI ? changeAngle.plus(new Rotation2d(2*Math.PI)) : changeAngle;
             // if the angle is greater than Pi, the angle is too big (larger than half the circle) 
             // and it's better to rotate the other way around. So I used this inline if statement (?: statement) to assign the angle
             // if the angle is greater than Pi, than it should turn the angle-2pi (draw a diagram to help you think about it)
