@@ -29,11 +29,6 @@ public final class Constants {
     public static final int kFrontRightMotorID = 3;
     public static final int kRearRightMotorID = 4;
 
-    public static final boolean kFrontLeftEncoderReversed = false;
-    public static final boolean kRearLeftEncoderReversed = true;
-    public static final boolean kFrontRightEncoderReversed = false;
-    public static final boolean kRearRightEncoderReversed = true;
-
     public static final double kTrackWidth = 0.5682;
     // Distance between centers of right and left wheels on robot
     public static final double kWheelBase = 0.4904;
@@ -49,7 +44,8 @@ public final class Constants {
 
     public static final int kEncoderCPR =2048 ;
     public static final double kWheelDiameterMeters = 0.1524;
-    public static final double kWheelCircumference = kWheelDiameterMeters * 2 * Math.PI;
+    public static final double kWheelCircumference = kWheelDiameterMeters * Math.PI;
+    public static final double kGearRatio = 50/14*48/16;
     public static final double kEncoderDistancePerPulse =
         // Assumes the encoders are directly mounted on the wheel shafts
         (kWheelDiameterMeters * Math.PI) / (double) kEncoderCPR;
@@ -60,17 +56,24 @@ public final class Constants {
     // for *your* robot's drive.
     // The SysId tool provides a convenient method for obtaining these values for
     // your robot.
-    public static final double kS = 0.61194;
-    public static final double kV = 0.020779;
-    public static final double kA = 0.0011068;
+    public static final double kS = 0.58646;
+    public static final double kV = 0.020877;
+    public static final double kA = 0.0010482;
 
     public static final SimpleMotorFeedforward kFeedforward = new SimpleMotorFeedforward(kS, kV, kA);
  
     // Example value only - as above, this must be tuned for your drive!
-    public static final double kPFrontLeftVel = 0.5;
-    public static final double kPRearLeftVel = 0.5;
-    public static final double kPFrontRightVel = 0.5;
-    public static final double kPRearRightVel = 0.5;
+    public static final double kPFrontLeftVel = 0.43088;
+    public static final double kPRearLeftVel = 0.43088;
+    public static final double kPFrontRightVel = 0.43088;
+    public static final double kPRearRightVel = 0.43088;
+
+    /*
+    public static final double kDFrontLeftVel = 0.061551;
+    public static final double kDRearLeftVel = 0.061551;
+    public static final double kDFrontRightVel = 0.0531;
+    public static final double kDRearRightVel = 0.0531;
+    */
   }
 
   public static final class ClimberConstants {
@@ -128,13 +131,14 @@ public final class Constants {
 
   public static final class AutoConstants {
     public static final double kMaxSpeedMetersPerSecond = 10;
-    public static final double kMaxAccelerationMetersPerSecondSquared = 3;
+    public static final double kMaxAccelerationMetersPerSecondSquared = 7;
     public static final double kMaxAngularSpeedRadiansPerSecond = Math.PI;
     public static final double kMaxAngularSpeedRadiansPerSecondSquared = Math.PI;
 
-    public static final double kPXController = 0.5;
-    public static final double kPYController = 0.5;
-    public static final double kPThetaController = 0.5;
+    public static final double kPXController = 0.43088;
+    public static final double kPYController = 0.43088;
+    public static final double kDXYController = 0.050397;
+    public static final double kPThetaController = 0.7619;
 
     // Constraint for the motion profilied robot angle controller
     public static final TrapezoidProfile.Constraints kThetaControllerConstraints = new TrapezoidProfile.Constraints(

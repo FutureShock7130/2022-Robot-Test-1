@@ -71,7 +71,7 @@ public class RobotContainer {
         // Drive at half speed when the RB button is held
         new JoystickButton(m_driverController, 6)
                 .whenPressed(() -> m_robotDrive.setMaxOutput(0.25))
-                .whenReleased(() -> m_robotDrive.setMaxOutput(0.5));
+                .whenReleased(() -> m_robotDrive.setMaxOutput(0.75));
         // rotate and aim at target upon pressing of the A button
         new JoystickButton(m_driverController,1).whenPressed(new teleopAimCommand(m_robotDrive));
     }
@@ -87,7 +87,7 @@ public class RobotContainer {
 
     public Command getAutonomousCommand() {
 
-        String trajectoryJSON = "paths/testPath.wpilib.json";
+        String trajectoryJSON = "paths/straightTest.wpilib.json";
         try {
             Path trajectoryPath = Filesystem.getDeployDirectory().toPath().resolve(trajectoryJSON);
             Trajectory testTrajectory = TrajectoryUtil.fromPathweaverJson(trajectoryPath);
@@ -99,8 +99,8 @@ public class RobotContainer {
                     DriveConstants.kDriveKinematics,
 
                     // Position contollers
-                    new PIDController(AutoConstants.kPXController, 0, 0),
-                    new PIDController(AutoConstants.kPYController, 0, 0),
+                    new PIDController(AutoConstants.kPXController, 0, 0.004),
+                    new PIDController(AutoConstants.kPYController, 0, 0.004),
                     new ProfiledPIDController(
                             AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints),
 
@@ -108,10 +108,10 @@ public class RobotContainer {
                     AutoConstants.kMaxSpeedMetersPerSecond,
 
                     // Velocity PID's
-                    new PIDController(DriveConstants.kPFrontLeftVel, 0, 0),
-                    new PIDController(DriveConstants.kPRearLeftVel, 0, 0),
-                    new PIDController(DriveConstants.kPFrontRightVel, 0, 0),
-                    new PIDController(DriveConstants.kPRearRightVel, 0, 0),
+                    new PIDController(DriveConstants.kPFrontLeftVel, 0, 0.004),
+                    new PIDController(DriveConstants.kPRearLeftVel, 0, 0.004),
+                    new PIDController(DriveConstants.kPFrontRightVel, 0, 0.004),
+                    new PIDController(DriveConstants.kPRearRightVel, 0, 0.004),
                     m_robotDrive::getCurrentWheelSpeeds,
                     m_robotDrive::setDriveMotorControllersVolts, // Consumer for the output motor voltages
                     m_robotDrive);

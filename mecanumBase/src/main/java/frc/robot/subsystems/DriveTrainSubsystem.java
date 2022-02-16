@@ -5,13 +5,13 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.MecanumDriveMotorVoltages;
 import edu.wpi.first.math.kinematics.MecanumDriveOdometry;
 import edu.wpi.first.math.kinematics.MecanumDriveWheelSpeeds;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.drive.MecanumDrive;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.robot.Constants.DriveConstants;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -19,28 +19,30 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import com.kauailabs.navx.frc.AHRS;
 
 public class DriveTrainSubsystem extends SubsystemBase {
-  /* doesn't work
-  private final PWMTalonSRX m_frontLeft = new PWMTalonSRX(DriveConstants.kFrontLeftMotorPort);
-  private final PWMTalonSRX m_rearLeft = new PWMTalonSRX(DriveConstants.kRearLeftMotorPort);
-  private final PWMTalonSRX m_frontRight = new PWMTalonSRX(DriveConstants.kFrontRightMotorPort);
-  private final PWMTalonSRX m_rearRight = new PWMTalonSRX(DriveConstants.kRearRightMotorPort);
-  */
-  
+  /*
+   * doesn't work
+   * private final PWMTalonSRX m_frontLeft = new
+   * PWMTalonSRX(DriveConstants.kFrontLeftMotorPort);
+   * private final PWMTalonSRX m_rearLeft = new
+   * PWMTalonSRX(DriveConstants.kRearLeftMotorPort);
+   * private final PWMTalonSRX m_frontRight = new
+   * PWMTalonSRX(DriveConstants.kFrontRightMotorPort);
+   * private final PWMTalonSRX m_rearRight = new
+   * PWMTalonSRX(DriveConstants.kRearRightMotorPort);
+   */
+
   private final WPI_TalonFX motorFL = new WPI_TalonFX(DriveConstants.kFrontLeftMotorID);
   private final WPI_TalonFX motorRL = new WPI_TalonFX(DriveConstants.kRearLeftMotorID);
   private final WPI_TalonFX motorFR = new WPI_TalonFX(DriveConstants.kFrontRightMotorID);
   private final WPI_TalonFX motorRR = new WPI_TalonFX(DriveConstants.kRearRightMotorID);
 
-  private final MecanumDrive m_drive =
-      new MecanumDrive(motorFL, motorRL, motorFR, motorRR);
+  private final MecanumDrive m_drive = new MecanumDrive(motorFL, motorRL, motorFR, motorRR);
   // The gyro sensor
   private final AHRS m_gyro = new AHRS(SPI.Port.kMXP);
 
   // Odometry class for tracking robot pose
-  MecanumDriveOdometry m_odometry =
-      new MecanumDriveOdometry(DriveConstants.kDriveKinematics, m_gyro.getRotation2d());
+  MecanumDriveOdometry m_odometry = new MecanumDriveOdometry(DriveConstants.kDriveKinematics, m_gyro.getRotation2d());
 
-  private Field2d m_field = new Field2d();
   /** Creates a new DriveSubsystem. */
   public DriveTrainSubsystem() {
     // Sets the distance per pulse for the encoders
@@ -49,10 +51,11 @@ public class DriveTrainSubsystem extends SubsystemBase {
     // We need to invert one side of the drivetrain so that positive voltages
     // result in both sides moving forward. Depending on how your robot's
     // gearbox is constructed, you might have to invert the left side instead.
-    //m_drive.setSafetyEnabled(false);
-    SmartDashboard.putData("Field", m_field);
+    // m_drive.setSafetyEnabled(false);
     motorFR.setInverted(true);
     motorRR.setInverted(true);
+    resetEncoders();
+    resetOdometry(new Pose2d(0, 0, Rotation2d.fromDegrees(0)));
   }
 
   @Override
@@ -61,12 +64,15 @@ public class DriveTrainSubsystem extends SubsystemBase {
     m_odometry.update(
         m_gyro.getRotation2d(),
         new MecanumDriveWheelSpeeds(
-          // need to change
-            motorFL.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference,
-            motorFR.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference,
-            motorRL.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference,
-            motorRR.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference));
-    m_field.setRobotPose(m_odometry.getPoseMeters());
+          motorFL.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio,
+          motorFR.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio,
+          motorRL.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio,
+          motorRR.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio));
+
+    DriverStation.reportWarning("pose x:" + m_odometry.getPoseMeters().getX(),
+        false);
+    DriverStation.reportWarning("pose y:" + m_odometry.getPoseMeters().getY(),
+        false);
   }
 
   /**
@@ -88,13 +94,16 @@ public class DriveTrainSubsystem extends SubsystemBase {
   }
 
   /**
-   * Drives the robot at given x, y and theta speeds. Speeds range from [-1, 1] and the linear
+   * Drives the robot at given x, y and theta speeds. Speeds range from [-1, 1]
+   * and the linear
    * speeds have no effect on the angular speed.
    *
-   * @param xSpeed Speed of the robot in the x direction (forward/backwards).
-   * @param ySpeed Speed of the robot in the y direction (sideways).
-   * @param rot Angular rate of the robot.
-   * @param fieldRelative Whether the provided x and y speeds are relative to the field.
+   * @param xSpeed        Speed of the robot in the x direction
+   *                      (forward/backwards).
+   * @param ySpeed        Speed of the robot in the y direction (sideways).
+   * @param rot           Angular rate of the robot.
+   * @param fieldRelative Whether the provided x and y speeds are relative to the
+   *                      field.
    */
   @SuppressWarnings("ParameterName")
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
@@ -127,10 +136,10 @@ public class DriveTrainSubsystem extends SubsystemBase {
    * @return the front left drive encoder
    */
   /*
-   public Encoder getFrontLeftEncoder() {
-    return m_frontLeftEncoder;
-  }
-  */
+   * public Encoder getFrontLeftEncoder() {
+   * return m_frontLeftEncoder;
+   * }
+   */
 
   /**
    * Gets the rear left drive encoder.
@@ -138,10 +147,10 @@ public class DriveTrainSubsystem extends SubsystemBase {
    * @return the rear left drive encoder
    */
   /*
-  public Encoder getRearLeftEncoder() {
-    return m_rearLeftEncoder;
-  }
-  */
+   * public Encoder getRearLeftEncoder() {
+   * return m_rearLeftEncoder;
+   * }
+   */
 
   /**
    * Gets the front right drive encoder.
@@ -149,10 +158,10 @@ public class DriveTrainSubsystem extends SubsystemBase {
    * @return the front right drive encoder
    */
   /*
-  public Encoder getFrontRightEncoder() {
-    return m_frontRightEncoder;
-  }
-  */
+   * public Encoder getFrontRightEncoder() {
+   * return m_frontRightEncoder;
+   * }
+   */
 
   /**
    * Gets the rear right drive encoder.
@@ -160,10 +169,10 @@ public class DriveTrainSubsystem extends SubsystemBase {
    * @return the rear right encoder
    */
   /*
-  public Encoder getRearRightEncoder() {
-    return m_rearRightEncoder;
-  }
-  */
+   * public Encoder getRearRightEncoder() {
+   * return m_rearRightEncoder;
+   * }
+   */
 
   /**
    * Gets the current wheel speeds.
@@ -172,14 +181,19 @@ public class DriveTrainSubsystem extends SubsystemBase {
    */
   public MecanumDriveWheelSpeeds getCurrentWheelSpeeds() {
     return new MecanumDriveWheelSpeeds(
-      motorFL.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference,
-      motorFL.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference,
-      motorFL.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference,
-      motorFL.getSelectedSensorVelocity()* (10.0 / 2048) * DriveConstants.kWheelCircumference);
+        motorFL.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio,
+        motorFR.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio,
+        motorRL.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio,
+        motorRR.getSelectedSensorVelocity() * DriveConstants.kWheelCircumference / 2048 / DriveConstants.kGearRatio);
+
+    // DriveConstants.kWheelCircumference/2048/DriveConstants.kGearRatio
+    // *0.8* 10 / 2048 * DriveConstants.kWheelCircumference/
+    // DriveConstants.kGearRatio
   }
 
   /**
-   * Sets the max output of the drive. Useful for scaling the drive to drive more slowly.
+   * Sets the max output of the drive. Useful for scaling the drive to drive more
+   * slowly.
    *
    * @param maxOutput the maximum output to which the drive will be constrained
    */
@@ -209,7 +223,12 @@ public class DriveTrainSubsystem extends SubsystemBase {
   public double getTurnRate() {
     return -m_gyro.getRate();
   }
-  public void testMotor(){
-    m_drive.driveCartesian(0.5, 0, 0);
+
+  public void testMotor() {
+    while ((motorFR.getSelectedSensorPosition() / 2048 * DriveConstants.kWheelCircumference
+        / DriveConstants.kGearRatio) < 2) {
+      m_drive.driveCartesian(0.5, 0, 0);
+    }
+    m_drive.driveCartesian(0, 0, 0);
   }
 }
